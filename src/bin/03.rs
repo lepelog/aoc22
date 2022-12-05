@@ -19,8 +19,7 @@ pub fn first_common_char(s1: &str, s2: &str, s3: &str) -> u8 {
     let s1set = s1.bytes().collect::<HashSet<_>>();
     let s2set = s2.bytes().collect::<HashSet<_>>();
     s3.bytes()
-        .filter(|b| s1set.contains(b) && s2set.contains(b))
-        .next()
+        .find(|b| s1set.contains(b) && s2set.contains(b))
         .unwrap()
 }
 
@@ -33,8 +32,7 @@ fn main() {
     let result: usize = rucksäcke
         .map(|r| {
             let p1chars = r.part1.bytes().collect::<HashSet<_>>();
-            let mut common = r.part2.bytes().filter(|b| p1chars.contains(&b));
-            let first_common = common.next().unwrap();
+            let first_common = r.part2.bytes().find(|b| p1chars.contains(b)).unwrap();
             char_prio(first_common) as usize
         })
         .sum();

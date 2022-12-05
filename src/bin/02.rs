@@ -124,8 +124,7 @@ fn main() {
         .map(|e| {
             let shape_score = e.own.score() as usize;
             let outcome_score = e.own.play(e.other).score() as usize;
-            let total = shape_score + outcome_score;
-            total
+            shape_score + outcome_score
         })
         .sum();
     let result2: usize = input
@@ -135,8 +134,7 @@ fn main() {
             let own = e.other.for_expected_outcome(&e.outcome);
             let shape_score = own.score() as usize;
             let outcome_score = e.outcome.score() as usize;
-            let total = shape_score + outcome_score;
-            total
+            shape_score + outcome_score
         })
         .sum();
     println!("{result}");
