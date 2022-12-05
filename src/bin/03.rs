@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use itertools::Itertools;
+
 struct Rucksack<'a> {
     part1: &'a str,
     part2: &'a str,
@@ -13,17 +15,42 @@ pub fn char_prio(c: u8) -> u8 {
     }
 }
 
+pub fn first_common_char(s1: &str, s2: &str, s3: &str) -> u8 {
+    let s1set = s1.bytes().collect::<HashSet<_>>();
+    let s2set = s2.bytes().collect::<HashSet<_>>();
+    s3.bytes()
+        .filter(|b| s1set.contains(b) && s2set.contains(b))
+        .next()
+        .unwrap()
+}
+
 fn main() {
     let input = include_str!("../input/03.txt");
     let rucksäcke = input.lines().map(|l| {
         let (part1, part2) = l.split_at(l.len() / 2);
-        Rucksack {part1, part2}
+        Rucksack { part1, part2 }
     });
-    let result: usize = rucksäcke.map(|r| {
-        let p1chars = r.part1.bytes().collect::<HashSet<_>>();
-        let mut common = r.part2.bytes().filter(|b| p1chars.contains(&b));
-        let first_common = common.next().unwrap();
-        char_prio(first_common) as usize
-    }).sum();
+    let result: usize = rucksäcke
+        .map(|r| {
+            let p1chars = r.part1.bytes().collect::<HashSet<_>>();
+            let mut common = r.part2.bytes().filter(|b| p1chars.contains(&b));
+            let first_common = common.next().unwrap();
+            char_prio(first_common) as usize
+        })
+        .sum();
     println!("{result}");
+    let result2: usize = input
+        .lines()
+        .chunks(3)
+        .into_iter()
+        .map(|mut chunk| {
+            let first_common = first_common_char(
+                chunk.next().unwrap(),
+                chunk.next().unwrap(),
+                chunk.next().unwrap(),
+            );
+            char_prio(first_common) as usize
+        })
+        .sum();
+    println!("{result2}");
 }
