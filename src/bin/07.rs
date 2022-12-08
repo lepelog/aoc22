@@ -11,19 +11,14 @@ enum Command<'a> {
 }
 
 // (directory sum, total sum)
-fn recursive_sum<'a, I: Iterator<Item = Command<'a>>>(itr: &mut Peekable<I>, all_dirs: &mut Vec<usize>) -> (usize, usize) {
-    let mut total_sum = 0;
+fn recursive_sum<'a, I: Iterator<Item = Command<'a>>>(itr: &mut Peekable<I>, all_dirs: &mut Vec<usize>) -> usize {
     let mut dir_sum = 0;
     while let Some(cmd) = itr.next() {
         match cmd {
             Command::EnterDir(_) => {
-                let (subdir_sum, subtotal) = recursive_sum(itr, all_dirs);
-                total_sum += subtotal;
+                let subdir_sum = recursive_sum(itr, all_dirs);
                 dir_sum += subdir_sum;
                 all_dirs.push(subdir_sum);
-                if subdir_sum < 100000 {
-                    total_sum += subdir_sum;
-                }
             },
             Command::LeaveDir => {
                 break;
@@ -41,7 +36,7 @@ fn recursive_sum<'a, I: Iterator<Item = Command<'a>>>(itr: &mut Peekable<I>, all
             _ => unreachable!(),
         }
     }
-    (dir_sum, total_sum)
+    dir_sum
 }
 
 fn main() {
@@ -62,11 +57,13 @@ fn main() {
         }
     });
     let _start = commands.next();
-    let mut v = Vec::new();
-    let (total_used_space, total_small_sums) = recursive_sum(&mut commands.clone().peekable(), &mut v);
-    println!("{}",total_small_sums);
-    let sum: usize = v.iter().cloned().filter(|i| *i < 100000).sum();
+    let mut dir_sizes = Vec::new();
+    let total_used_space = recursive_sum(&mut commands.clone().peekable(), &mut dir_sizes);
+    let sum: usize = dir_sizes.iter().cloned().filter(|i| *i < 100000).sum();
     println!("{}", sum);
-    // let size_to_free = 30000000 - (70000000 - total_used_space);
-    // println!("{}", size_to_free);
+    let size_to_free = 30000000 - (70000000 - total_used_space);
+    dir_sizes.sort_unstable();
+    // println!("{:?}", dir_sizes);
+    let smallest_big_enough = dir_sizes.iter().find(|d| **d > size_to_free);
+    println!("{:?}", smallest_big_enough);
 }
