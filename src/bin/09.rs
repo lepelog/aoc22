@@ -1,19 +1,24 @@
-use std::{iter::repeat, ops::{Sub, Add, AddAssign}, hash::Hash, collections::HashSet};
+use std::{
+    collections::HashSet,
+    hash::Hash,
+    iter::repeat,
+    ops::{Add, AddAssign, Sub},
+};
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-struct Vec2<T: Add<T, Output=T> + Sub<T, Output=T> + Default + Hash + PartialEq + Eq> {
+struct Vec2<T: Add<T, Output = T> + Sub<T, Output = T> + Default + Hash + PartialEq + Eq> {
     x: T,
-    y: T
+    y: T,
 }
 
-impl<T: Add<T, Output=T> + Sub<T, Output=T> + Default + Hash + PartialEq + Eq> Vec2<T> {
+impl<T: Add<T, Output = T> + Sub<T, Output = T> + Default + Hash + PartialEq + Eq> Vec2<T> {
     fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
 }
 
-impl<T: Add<T, Output=T> + Sub<T, Output=T> + Default + Hash + PartialEq + Eq> Add for Vec2<T> {
-    type Output=Self;
+impl<T: Add<T, Output = T> + Sub<T, Output = T> + Default + Hash + PartialEq + Eq> Add for Vec2<T> {
+    type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
         Self {
@@ -23,8 +28,8 @@ impl<T: Add<T, Output=T> + Sub<T, Output=T> + Default + Hash + PartialEq + Eq> A
     }
 }
 
-impl<T: Add<T, Output=T> + Sub<T, Output=T> + Default + Hash + PartialEq + Eq> Sub for Vec2<T> {
-    type Output=Self;
+impl<T: Add<T, Output = T> + Sub<T, Output = T> + Default + Hash + PartialEq + Eq> Sub for Vec2<T> {
+    type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self {
@@ -34,13 +39,14 @@ impl<T: Add<T, Output=T> + Sub<T, Output=T> + Default + Hash + PartialEq + Eq> S
     }
 }
 
-impl<T: Add<T, Output=T> + Sub<T, Output=T> + Default + Hash + PartialEq + Eq + Copy> AddAssign for Vec2<T> {
+impl<T: Add<T, Output = T> + Sub<T, Output = T> + Default + Hash + PartialEq + Eq + Copy> AddAssign
+    for Vec2<T>
+{
     fn add_assign(&mut self, rhs: Self) {
         self.x = self.x + rhs.x;
         self.y = self.y + rhs.y;
     }
 }
-
 
 enum Direction {
     Up,
@@ -52,10 +58,10 @@ enum Direction {
 impl Direction {
     fn get_move(&self) -> Vec2<isize> {
         match self {
-            Direction::Up => Vec2 { x: 0, y: -1 },
-            Direction::Down => Vec2 { x: 0, y: 1 },
-            Direction::Left => Vec2 { x: -1, y: 0 },
-            Direction::Right => Vec2 { x: 1, y: 0 },
+            Direction::Up => Vec2::new(0, -1),
+            Direction::Down => Vec2::new(0, 1),
+            Direction::Left => Vec2::new(-1, 0),
+            Direction::Right => Vec2::new(1, 0),
         }
     }
 }
@@ -84,35 +90,27 @@ impl Command {
     }
 }
 
-#[derive(Debug, Default)]
-struct HeadTailSim {
-    knots: Vec<Vec2<isize>>
+#[derive(Debug)]
+struct RopeSim<const N: usize> {
+    knots: [Vec2<isize>; N],
 }
 
-pub fn two_to_one(x: isize) -> isize {
-    if x < 0 {
-        -1
-    } else if x > 0 {
-        1
-    } else {
-        0
-    }
-}
-
-impl HeadTailSim {
-    fn new(knotcount: usize) -> Self {
-        Self { knots : vec![Vec2::default(); knotcount] }
+impl<const N: usize> RopeSim<N> {
+    fn new() -> Self {
+        Self {
+            knots: [Vec2::default(); N],
+        }
     }
 
     fn perform_move(&mut self, mov: &Vec2<isize>) {
         *self.knots.first_mut().unwrap() += *mov;
         for i in 0..self.knots.len() - 1 {
             let head = self.knots[i].clone();
-            let tail = &mut self.knots[i+1];
+            let tail = &mut self.knots[i + 1];
             // correct tail movement
             let diff = head - *tail;
             if diff.x.abs() >= 2 || diff.y.abs() >= 2 {
-                *tail += Vec2 { x: diff.x.clamp(-1, 1), y:diff.y.clamp(-1, 1) };
+                *tail += Vec2::new(diff.x.clamp(-1, 1), diff.y.clamp(-1, 1));
             } else {
                 break;
             }
@@ -122,29 +120,31 @@ impl HeadTailSim {
 
 fn main() {
     let input = include_str!("../input/09.txt");
-//     let input = "R 5
-// U 8
-// L 8
-// D 3
-// R 17
-// D 10
-// L 25
-// U 20
-// ";
+    //     let input = "R 5
+    // U 8
+    // L 8
+    // D 3
+    // R 17
+    // D 10
+    // L 25
+    // U 20
+    // ";
     let mut all_tail_pos2 = HashSet::new();
-    let mut sim2 = HeadTailSim::new(2);
-    all_tail_pos2.insert(*sim2.knots.last().unwrap());
     let mut all_tail_pos10 = HashSet::new();
-    let mut sim10 = HeadTailSim::new(10);
-    all_tail_pos10.insert(*sim10.knots.last().unwrap());
+    let mut rope_sim: RopeSim<10> = RopeSim::new();
+    all_tail_pos2.insert(rope_sim.knots[1]);
+    all_tail_pos10.insert(rope_sim.knots[9]);
     for cmd in input.lines().map(Command::parse) {
         for mov in cmd.get_moves() {
-            sim2.perform_move(&mov);
-            all_tail_pos2.insert(*sim2.knots.last().unwrap());
-            sim10.perform_move(&mov);
-            all_tail_pos10.insert(*sim10.knots.last().unwrap());
+            rope_sim.perform_move(&mov);
+            all_tail_pos2.insert(rope_sim.knots[1]);
+            all_tail_pos10.insert(rope_sim.knots[9]);
         }
     }
     println!("{}", all_tail_pos2.len());
     println!("{}", all_tail_pos10.len());
+    // println!("{:?}", all_tail_pos2.iter().map(|p| p.x).max());
+    // println!("{:?}", all_tail_pos2.iter().map(|p| p.y).max());
+    // println!("{:?}", all_tail_pos2.iter().map(|p| p.x).min());
+    // println!("{:?}", all_tail_pos2.iter().map(|p| p.y).min());
 }
