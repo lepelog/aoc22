@@ -86,51 +86,65 @@ impl Command {
 
 #[derive(Debug, Default)]
 struct HeadTailSim {
-    head: Vec2<isize>,
-    tail: Vec2<isize>,
+    knots: Vec<Vec2<isize>>
+}
+
+pub fn two_to_one(x: isize) -> isize {
+    if x < 0 {
+        -1
+    } else if x > 0 {
+        1
+    } else {
+        0
+    }
 }
 
 impl HeadTailSim {
+    fn new(knotcount: usize) -> Self {
+        Self { knots : vec![Vec2::default(); knotcount] }
+    }
+
     fn perform_move(&mut self, mov: &Vec2<isize>) {
-        self.head += *mov;
-        // correct tail movement
-        match self.head - self.tail {
-            Vec2 { x: -2, y: _ } => {
-                self.tail = self.head + Vec2 { x: 1, y: 0 };
-            },
-            Vec2 { x: 2, y: _ } => {
-                self.tail = self.head - Vec2 { x: 1, y: 0 };
-            },
-            Vec2 { x: _, y: -2 } => {
-                self.tail = self.head + Vec2 { x: 0, y: 1 };
-            },
-            Vec2 { x: _, y: 2 } => {
-                self.tail = self.head - Vec2 { x: 0, y: 1 };
-            },
-            _ => ()
+        *self.knots.first_mut().unwrap() += *mov;
+        for i in 0..self.knots.len() - 1 {
+            let head = self.knots[i].clone();
+            let tail = &mut self.knots[i+1];
+            // correct tail movement
+            let diff = head - *tail;
+            if diff.x.abs() >= 2 || diff.y.abs() >= 2 {
+                *tail += Vec2 { x: diff.x.clamp(-1, 1), y:diff.y.clamp(-1, 1) };
+            } else {
+                break;
+            }
         }
     }
 }
 
 fn main() {
     let input = include_str!("../input/09.txt");
-//     let input = "R 4
-// U 4
-// L 3
-// D 1
-// R 4
-// D 1
-// L 5
-// R 2
+//     let input = "R 5
+// U 8
+// L 8
+// D 3
+// R 17
+// D 10
+// L 25
+// U 20
 // ";
-    let mut all_tail_pos = HashSet::new();
-    let mut sim = HeadTailSim::default();
-    all_tail_pos.insert(sim.tail);
+    let mut all_tail_pos2 = HashSet::new();
+    let mut sim2 = HeadTailSim::new(2);
+    all_tail_pos2.insert(*sim2.knots.last().unwrap());
+    let mut all_tail_pos10 = HashSet::new();
+    let mut sim10 = HeadTailSim::new(10);
+    all_tail_pos10.insert(*sim10.knots.last().unwrap());
     for cmd in input.lines().map(Command::parse) {
         for mov in cmd.get_moves() {
-            sim.perform_move(&mov);
-            all_tail_pos.insert(sim.tail);
+            sim2.perform_move(&mov);
+            all_tail_pos2.insert(*sim2.knots.last().unwrap());
+            sim10.perform_move(&mov);
+            all_tail_pos10.insert(*sim10.knots.last().unwrap());
         }
     }
-    println!("{}", all_tail_pos.len());
+    println!("{}", all_tail_pos2.len());
+    println!("{}", all_tail_pos10.len());
 }
