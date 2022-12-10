@@ -5,7 +5,7 @@ enum Command {
 
 fn parse_num_from_bytes(bytes: &[u8]) -> isize {
     let mut b_iter = bytes.iter().peekable();
-    let is_negative = match b_iter.peek().cloned() {
+    let is_negative = match b_iter.peek().copied() {
         Some(b'-') => {
             let _ = b_iter.next();
             true
@@ -16,7 +16,7 @@ fn parse_num_from_bytes(bytes: &[u8]) -> isize {
     for num_byte in b_iter {
         match num_byte {
             b'0'..=b'9' => {
-                num = 10 * num + (*num_byte - b'0') as isize;
+                num = 10 * num + <u8 as Into<isize>>::into(*num_byte - b'0');
             }
             _ => break,
         }
@@ -67,11 +67,10 @@ impl<I: Iterator<Item = Command>> Iterator for PositionIter<I> {
             return Some(old_pos);
         }
         match self.iter.next() {
-            Some(Command::Noop) => (),
             Some(Command::Addx(add)) => {
                 self.pending_add = Some(add);
             }
-            None => (),
+            _ => (),
         }
         Some(self.pos)
     }
@@ -101,7 +100,7 @@ fn main() {
             if x_pos <= beam_pos + 1 && x_pos >= beam_pos - 1 {
                 print!("#");
             } else {
-                print!(".")
+                print!(".");
             }
         }
         println!();

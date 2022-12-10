@@ -75,7 +75,7 @@ fn main() {
         let (l, from) = map_res(digit1, str::parse)(l)?;
         let (l, _) = tag(" to ")(l)?;
         let (l, to) = map_res(digit1, str::parse)(l)?;
-        Ok((l, Move { count, from, to }))
+        Ok((l, Move { from, to, count }))
     }
     // parse moves
     let moves: Vec<_> = lines
@@ -87,7 +87,7 @@ fn main() {
     let mut stacks = CrateStacks { stacks };
     // part1
     let mut stacks_part1 = stacks.clone();
-    for mov in moves.iter() {
+    for mov in &moves {
         stacks_part1.exec_move(mov);
     }
     let outs: String = stacks_part1
@@ -97,7 +97,7 @@ fn main() {
         .collect();
     println!("{}", outs);
     // part2
-    for mov in moves.iter() {
+    for mov in &moves {
         stacks.exec_order_preserving(mov);
     }
     let outs: String = stacks

@@ -10,7 +10,7 @@ fn main() {
             cur_sum += line.parse::<i32>().unwrap();
         }
     }
-    all_sums.sort();
+    all_sums.sort_unstable();
     println!("p1: {}", all_sums.last().unwrap());
     let top3sum: i32 = all_sums.iter().rev().take(3).sum();
     println!("p2: {}", top3sum);

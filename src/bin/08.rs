@@ -23,7 +23,7 @@ impl<'a> TreeGrid<'a> {
         if x_u >= self.columns || y_u >= self.rows {
             return None;
         }
-        self.grid.get(x_u + y_u * (self.columns + 1)).cloned()
+        self.grid.get(x_u + y_u * (self.columns + 1)).copied()
     }
 }
 

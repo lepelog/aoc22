@@ -105,7 +105,7 @@ impl<const N: usize> RopeSim<N> {
     fn perform_move(&mut self, mov: &Vec2<isize>) {
         *self.knots.first_mut().unwrap() += *mov;
         for i in 0..self.knots.len() - 1 {
-            let head = self.knots[i].clone();
+            let head = self.knots[i];
             let tail = &mut self.knots[i + 1];
             // correct tail movement
             let diff = head - *tail;
