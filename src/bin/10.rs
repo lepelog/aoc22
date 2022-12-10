@@ -40,38 +40,50 @@ impl Command {
     }
 }
 
+struct PositionIter<I: Iterator<Item = Command>> {
+    iter: I,
+    pending_add: Option<isize>,
+    pos: isize,
+}
+
+impl<I: Iterator<Item = Command>> PositionIter<I> {
+    fn new(iter: I) -> Self {
+        Self { iter, pending_add: None, pos: 1 }
+    }
+}
+
+// this would be a nice generator...
+impl<I: Iterator<Item = Command>> Iterator for PositionIter<I> {
+    type Item = isize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(add) = self.pending_add {
+            self.pending_add = None;
+            let old_pos = self.pos;
+            self.pos += add;
+            return Some(old_pos);
+        }
+        match self.iter.next()? {
+            Command::Noop => (),
+            Command::Addx(add) => {
+                self.pending_add = Some(add);
+            }
+        }
+        Some(self.pos)
+    }
+}
+
+
 fn main() {
     let input = include_str!("../input/10.txt");
     // let input = include_str!("../input/10test.txt");
-    let mut cycle_num = 0;
     let cycles_to_check = &[20, 60, 100, 140, 180, 220];
     let mut strength_sum = 0;
-    let mut x_reg = 1;
-    for cmd in input.as_bytes().split(|b| *b == b'\n').filter(|line| !line.is_empty()).map(Command::parse) {
-        match cmd {
-            Command::Noop => {
-                // takes one cycle, does nothing
-                cycle_num += 1;
-                if cycles_to_check.binary_search(&cycle_num).is_ok() {
-                    println!("{x_reg}:{cycle_num}");
-                    strength_sum += cycle_num *  x_reg;
-                }
-            },
-            Command::Addx(add) => {
-                // takes 2 cycles
-                // tick first cycle
-                cycle_num += 1;
-                if cycles_to_check.binary_search(&cycle_num).is_ok() {
-                    println!("{x_reg}:{cycle_num}");
-                    strength_sum += cycle_num * x_reg;
-                }
-                cycle_num += 1;
-                if cycles_to_check.binary_search(&cycle_num).is_ok() {
-                    println!("{x_reg}:{cycle_num}");
-                    strength_sum += cycle_num *  x_reg;
-                }
-                x_reg += add;
-            }
+    let position_iter = PositionIter::new(input.as_bytes().split(|b| *b == b'\n').filter(|line| !line.is_empty()).map(Command::parse));
+    for (cycle_num, x_reg) in (1..).zip(position_iter) {
+        if cycles_to_check.binary_search(&cycle_num).is_ok() {
+            println!("{x_reg}:{cycle_num}");
+            strength_sum += cycle_num *  x_reg;
         }
     }
     println!("{strength_sum}");
