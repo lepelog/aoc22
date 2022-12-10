@@ -40,6 +40,7 @@ impl Command {
     }
 }
 
+#[derive(Clone)]
 struct PositionIter<I: Iterator<Item = Command>> {
     iter: I,
     pending_add: Option<isize>,
@@ -63,11 +64,12 @@ impl<I: Iterator<Item = Command>> Iterator for PositionIter<I> {
             self.pos += add;
             return Some(old_pos);
         }
-        match self.iter.next()? {
-            Command::Noop => (),
-            Command::Addx(add) => {
+        match self.iter.next() {
+            Some(Command::Noop) => (),
+            Some(Command::Addx(add)) => {
                 self.pending_add = Some(add);
             }
+            None => (),
         }
         Some(self.pos)
     }
@@ -79,12 +81,22 @@ fn main() {
     // let input = include_str!("../input/10test.txt");
     let cycles_to_check = &[20, 60, 100, 140, 180, 220];
     let mut strength_sum = 0;
-    let position_iter = PositionIter::new(input.as_bytes().split(|b| *b == b'\n').filter(|line| !line.is_empty()).map(Command::parse));
-    for (cycle_num, x_reg) in (1..).zip(position_iter) {
+    let mut position_iter = PositionIter::new(input.as_bytes().split(|b| *b == b'\n').filter(|line| !line.is_empty()).map(Command::parse));
+    for (cycle_num, x_reg) in (1..).zip(position_iter.clone()).take(220) {
         if cycles_to_check.binary_search(&cycle_num).is_ok() {
-            println!("{x_reg}:{cycle_num}");
             strength_sum += cycle_num *  x_reg;
         }
     }
     println!("{strength_sum}");
+    for _ in 0..6 {
+        for beam_pos in 0..40 {
+            let x_pos = position_iter.next().unwrap();
+            if x_pos <= beam_pos+1 && x_pos >= beam_pos - 1 {
+                print!("#");
+            } else {
+                print!(".")
+            }
+        }
+        println!();
+    }
 }
