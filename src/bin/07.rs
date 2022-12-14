@@ -60,9 +60,9 @@ fn main() {
     let _start = commands.next();
     let mut dir_sizes = Vec::new();
     let total_used_space = recursive_sum(&mut commands.clone().peekable(), &mut dir_sizes);
-    let sum: usize = dir_sizes.iter().copied().filter(|i| *i < 100000).sum();
+    let sum: usize = dir_sizes.iter().copied().filter(|i| *i < 100_000).sum();
     println!("{}", sum);
-    let size_to_free = 30000000 - (70000000 - total_used_space);
+    let size_to_free = 30_000_000 - (70_000_000 - total_used_space);
     dir_sizes.sort_unstable();
     // println!("{:?}", dir_sizes);
     let smallest_big_enough = dir_sizes.iter().find(|d| **d > size_to_free);

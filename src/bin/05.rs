@@ -64,7 +64,7 @@ fn main() {
         }
         is_first_iter = false;
     }
-    for stack in stacks.iter_mut() {
+    for stack in &mut stacks {
         stack.reverse();
     }
     let _ = lines.next();
