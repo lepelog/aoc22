@@ -1,14 +1,21 @@
-use std::{borrow::Borrow, collections::VecDeque};
+use std::{
+    borrow::Borrow,
+    collections::{HashSet, VecDeque},
+};
 
 use aoc22::{parse_num_from_bytes, Highest};
-use nom::{bytes::complete::{tag, take_until1, take_while, take_while1}, IResult, combinator::map_res, character::complete::digit1};
-
+use nom::{
+    bytes::complete::{tag, take_until1, take_while, take_while1},
+    character::complete::digit1,
+    combinator::map_res,
+    IResult,
+};
 
 #[derive(Debug, Clone, Copy)]
 enum Operation {
     Square,
     Multiply(usize),
-    Add(usize)
+    Add(usize),
 }
 
 impl Operation {
@@ -42,15 +49,18 @@ struct Monkey {
     div_test: usize,
     monkey_true: usize,
     monkey_false: usize,
-    total_items_inspected: usize
+    total_items_inspected: usize,
 }
 
 impl Monkey {
-    fn process_next_item(&mut self, divide_by_3: bool) -> Option<(usize, usize)> {
+    fn process_next_item(&mut self, day2_mod: Option<usize>) -> Option<(usize, usize)> {
         let item = self.worry_items.pop_front()?;
         self.total_items_inspected += 1;
         let mut new_val = self.op.exec(item);
-        if divide_by_3 {
+        if let Some(day2_mod) = day2_mod {
+            // new_val = new_val % (19);
+            new_val = new_val % day2_mod;
+        } else {
             new_val = new_val / 3;
         }
         if new_val % self.div_test == 0 {
@@ -63,7 +73,7 @@ impl Monkey {
 
 fn parse_num_nom(mut input: &[u8]) -> IResult<&[u8], isize> {
     let negative;
-    (negative, input) = match tag::<_,_,nom::error::Error<_>>(b"-")(input) {
+    (negative, input) = match tag::<_, _, nom::error::Error<_>>(b"-")(input) {
         Ok((_, input)) => (true, input),
         Err(_) => (false, input),
     };
@@ -92,7 +102,7 @@ fn main() {
         let mut monkeys = monkeys.clone();
         for _ in 0..20 {
             for i in 0..monkeys.len() {
-                while let Some((monke, new_val)) = monkeys[i].process_next_item(true) {
+                while let Some((monke, new_val)) = monkeys[i].process_next_item(None) {
                     monkeys[monke].worry_items.push_back(new_val);
                 }
             }
@@ -105,22 +115,30 @@ fn main() {
         let [num1, num2] = highest.get();
         println!("{}", num1 * num2);
     }
-    // {
-    //     for _ in 0..10000 {
-    //         for i in 0..monkeys.len() {
-    //             while let Some((monke, new_val)) = monkeys[i].process_next_item(false) {
-    //                 monkeys[monke].worry_items.push_back(new_val);
-    //             }
-    //         }
-    //     }
-    //     // println!("{:?}", monkeys);
-    //     let mut highest: Highest<2> = Highest::new();
-    //     for monkey in &monkeys {
-    //         highest.insert(monkey.total_items_inspected);
-    //     }
-    //     let [num1, num2] = highest.get();
-    //     println!("{}", num1 * num2);
-    // }
+    {
+        let mut factors = HashSet::new();
+        for monkey in &monkeys {
+            factors.insert(monkey.div_test);
+            if let Operation::Multiply(mul) = monkey.op {
+                factors.insert(mul);
+            }
+        }
+        let factor = factors.iter().product();
+        for _ in 0..10000 {
+            for i in 0..monkeys.len() {
+                while let Some((monke, new_val)) = monkeys[i].process_next_item(Some(factor)) {
+                    monkeys[monke].worry_items.push_back(new_val);
+                }
+            }
+        }
+        println!("{:?}", monkeys);
+        let mut highest: Highest<2> = Highest::new();
+        for monkey in &monkeys {
+            highest.insert(monkey.total_items_inspected);
+        }
+        let [num1, num2] = highest.get();
+        println!("{}", num1 * num2);
+    }
 }
 
 fn parse_monkeys(mut input: &[u8]) -> IResult<&[u8], Vec<Monkey>> {
@@ -163,4 +181,3 @@ fn parse_monkeys(mut input: &[u8]) -> IResult<&[u8], Vec<Monkey>> {
     println!("{:?}", monkeys);
     Ok((input, monkeys))
 }
-
